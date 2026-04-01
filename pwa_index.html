@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Prosperity"/>
+  <meta name="theme-color" content="#1D9E75"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <title>Path of Prosperity</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:   #1D9E75; --green-bg: #EAF3DE; --green-bd: #C0DD97; --green-tx: #27500A; --green-md: #3B6D11;
+      --red-bg:  #FCEBEB; --red-bd:  #F7C1C1; --red-tx:  #791F1F; --red-md:  #A32D2D;
+      --amb-bg:  #FAEEDA; --amb-bd:  #FAC775; --amb-tx:  #633806; --amb-md:  #854F0B;
+      --blu-bg:  #E6F1FB; --blu-bd:  #B5D4F4; --blu-tx:  #0C447C; --blu-md:  #185FA5;
+      --pur-bg:  #EEEDFE; --pur-bd:  #CECBF6; --pur-tx:  #3C3489; --pur-md:  #534AB7;
+      --tel-bg:  #E1F5EE; --tel-bd:  #9FE1CB; --tel-tx:  #085041; --tel-md:  #0F6E56;
+      --bg:      #ffffff; --bg2: #f5f5f0; --tx: #1a1a18; --tx2: #6b6b66; --tx3: #9c9a92;
+      --bd:      rgba(0,0,0,0.12); --bd2: rgba(0,0,0,0.2);
+      --radius:  14px; --safe-top: env(safe-area-inset-top); --safe-bot: env(safe-area-inset-bottom);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18; --bg2: #242422; --tx: #e8e6df; --tx2: #9c9a92; --tx3: #6b6b66;
+        --bd: rgba(255,255,255,0.1); --bd2: rgba(255,255,255,0.18);
+        --green-bg:#173404; --green-bd:#27500A; --green-tx:#C0DD97; --green-md:#97C459;
+        --red-bg:#2a1010; --red-bd:#501313; --red-tx:#F09595; --red-md:#E24B4A;
+        --amb-bg:#251a08; --amb-bd:#412402; --amb-tx:#FAC775; --amb-md:#EF9F27;
+        --blu-bg:#091e35; --blu-bd:#042C53; --blu-tx:#B5D4F4; --blu-md:#378ADD;
+        --pur-bg:#16123a; --pur-bd:#26215C; --pur-tx:#CECBF6; --pur-md:#7F77DD;
+        --tel-bg:#04201a; --tel-bd:#04342C; --tel-tx:#9FE1CB; --tel-md:#1D9E75;
+      }
+    }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg2); color: var(--tx); -webkit-tap-highlight-color: transparent; }
+    body { padding-top: var(--safe-top); padding-bottom: var(--safe-bot); overflow-x: hidden; }
+    #root { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--bg); }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ── Status bar ── */
+    .status { padding: 10px 18px 8px; display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-bottom: 0.5px solid var(--bd); position: sticky; top: 0; z-index: 10; }
+    .status-title { font-size: 15px; font-weight: 600; }
+    .pill { font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 0.5px solid; }
+
+    /* ── Progress bar ── */
+    .progress { display: flex; gap: 5px; padding: 10px 18px 0; }
+    .progress-seg { flex: 1; height: 4px; border-radius: 2px; background: var(--bd); transition: background .3s; }
+    .progress-seg.done  { background: var(--green); }
+    .progress-seg.active { background: var(--green); opacity: .5; }
+
+    /* ── Card ── */
+    .event-card { margin: 14px 16px; border-radius: var(--radius); border-width: 1.5px; border-style: solid; padding: 16px; }
+    .cat-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,.55); border: 0.5px solid; display: inline-block; margin-bottom: 10px; }
+    .card-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; line-height: 1.25; }
+    .card-desc  { font-size: 14px; line-height: 1.5; margin-bottom: 14px; opacity: .85; }
+    .impact-chip { font-size: 14px; font-weight: 600; padding: 5px 14px; border-radius: 9px; background: rgba(255,255,255,.55); display: inline-block; }
+
+    /* ── Buttons ── */
+    .btn-primary { width: 100%; padding: 15px; border-radius: 13px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff; transition: opacity .15s, transform .1s; }
+    .btn-primary:active { opacity: .8; transform: scale(.98); }
+    .btn-ghost   { width: 100%; padding: 13px; border-radius: 13px; border: 0.5px solid var(--bd2); background: transparent; color: var(--tx2); font-size: 15px; cursor: pointer; }
+
+    /* ── Emotion grid ── */
+    .emo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
+    .emo-btn  { padding: 18px 10px; border-radius: 14px; border-width: 1.5px; border-style: solid; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform .1s; background: var(--bg); }
+    .emo-btn:active { transform: scale(.96); }
+    .emo-icon { font-size: 30px; }
+    .emo-label { font-size: 14px; font-weight: 600; }
+
+    /* ── Belief list ── */
+    .belief-list { display: flex; flex-direction: column; gap: 9px; padding: 0 16px; }
+    .belief-btn  { text-align: left; padding: 14px 15px; border-radius: 0 13px 13px 0; border: 1px solid; border-left-width: 4px; cursor: pointer; background: var(--bg); transition: transform .1s; }
+    .belief-btn:active { transform: scale(.98); }
+    .belief-text { font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 3px; }
+    .belief-type { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+
+    /* ── Mentor box ── */
+    .mentor-box  { margin: 0 16px; background: var(--bg2); border-radius: 14px; padding: 16px; min-height: 90px; }
+    .mentor-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .mentor-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--bg2); border: 0.5px solid var(--bd); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--tx2); flex-shrink: 0; }
+    .mentor-text { font-size: 15px; line-height: 1.7; }
+
+    /* ── Outcome ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; padding: 0 16px; margin-bottom: 14px; }
+    .stat-card  { background: var(--bg2); border-radius: 12px; padding: 12px 13px; }
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--tx3); margin-bottom: 3px; }
+    .stat-val   { font-size: 18px; font-weight: 600; }
+
+    /* ── Log ── */
+    .log-box { margin: 0 16px 14px; background: var(--bg2); border-radius: 12px; padding: 11px 13px; }
+    .log-row { display: flex; gap: 7px; align-items: center; margin-bottom: 5px; }
+    .log-row:last-child { margin-bottom: 0; }
+    .log-rnd { font-size: 11px; color: var(--tx3); min-width: 18px; }
+    .log-name { font-size: 12px; color: var(--tx2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-chip { font-size: 10px; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+
+    /* ── Timer ring ── */
+    .timer-wrap { position: relative; width: 36px; height: 36px; flex-shrink: 0; }
+    .timer-wrap svg { transform: rotate(-90deg); }
+    .timer-val  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+    /* ── Section header ── */
+    .sec-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--tx3); margin: 0 0 8px; padding: 0 16px; }
+    .h2 { font-size: 17px; font-weight: 600; }
+    .h3 { font-size: 15px; font-weight: 600; }
+    .body { padding: 0 16px; }
+
+    /* ── Report ── */
+    .report-section { margin: 0 16px 12px; border-radius: 12px; border: 0.5px solid; overflow: hidden; }
+    .report-head { padding: 10px 13px 8px; border-bottom: 0.5px solid; }
+    .report-body { padding: 12px 13px; font-size: 13px; line-height: 1.65; }
+
+    /* ── Util ── */
+    .row { display: flex; align-items: center; justify-content: space-between; }
+    .gap { gap: 8px; }
+    .mt8  { margin-top: 8px; }
+    .mt14 { margin-top: 14px; }
+    .mt16 { margin-top: 16px; }
+    .mb14 { margin-bottom: 14px; }
+    .ph16 { padding: 0 16px; }
+    .cursor { opacity: .4; animation: blink .8s infinite; }
+    @keyframes blink { 0%,100%{opacity:.4} 50%{opacity:0} }
+    .fade { animation: fadeUp .25s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+<div id="root">
+  <!-- SCREENS INJECTED BY JS -->
+</div>
+
+<script>
+const CARDS = [
+  {id:1,cat:"Crisis",color:"red",title:"Car repair bill",desc:"Mechanic texts. Transmission failure. $1,200 due before pickup.",impact:"-$1,200",impactVal:-1200,passive:0},
+  {id:2,cat:"Crisis",color:"red",title:"Hours cut at work",desc:"Employer drops everyone to part-time. No warning, no plan.",impact:"-$600/mo",impactVal:-600,passive:0},
+  {id:3,cat:"Crisis",color:"red",title:"Rent just went up",desc:"Landlord raises rent $350. 30 days to decide — stay or move.",impact:"-$350/mo",impactVal:-350,passive:0},
+  {id:4,cat:"Crisis",color:"red",title:"Medical bill arrived",desc:"ER visit last month. Stress-induced symptoms. $1,800 due now.",impact:"-$1,800",impactVal:-1800,passive:0},
+  {id:5,cat:"Opportunity",color:"amber",title:"Freelance offer",desc:"Ex-colleague wants you for a 10hr/week side project. Pays well.",impact:"+$800/mo",impactVal:800,passive:800},
+  {id:6,cat:"Opportunity",color:"amber",title:"Spare room to rent",desc:"A spare room could bring steady income. Less privacy, faster progress.",impact:"+$700/mo",impactVal:700,passive:700},
+  {id:7,cat:"Opportunity",color:"amber",title:"Certification landed",desc:"You finish a course. A better-paying job offer arrives in 2 weeks.",impact:"+$1,200/mo",impactVal:1200,passive:0},
+  {id:8,cat:"Income",color:"green",title:"Tax refund arrived",desc:"You filed carefully. $1,400 lands in your account.",impact:"+$1,400",impactVal:1400,passive:0},
+  {id:9,cat:"Income",color:"green",title:"Performance bonus",desc:"Manager acknowledges your results with a surprise quarterly bonus.",impact:"+$2,000",impactVal:2000,passive:0},
+  {id:10,cat:"Income",color:"green",title:"Weekend gig pays off",desc:"Two months of weekend driving finally adds up. Consistent now.",impact:"+$400/mo",impactVal:400,passive:400},
+  {id:11,cat:"Investment",color:"blue",title:"Index fund dips 8%",desc:"You invested $2,000 last month. Market drops. Hold or panic-sell?",impact:"-$160 paper",impactVal:-160,passive:0},
+  {id:12,cat:"Investment",color:"blue",title:"Dividend stock pays",desc:"A stock you bought 6 months ago sends its first quarterly dividend.",impact:"+$120/qtr",impactVal:120,passive:120},
+  {id:13,cat:"Joy",color:"purple",title:"Family vacation",desc:"You book a long-overdue trip. The costs are real. So are the memories.",impact:"-$1,500",impactVal:-1500,passive:0},
+  {id:14,cat:"Risk",color:"teal",title:"Quit without backup",desc:"You resign before securing a new role. Clock is ticking.",impact:"-$3,000/mo",impactVal:-3000,passive:0},
+  {id:15,cat:"Risk",color:"teal",title:"Big move to new city",desc:"A better opportunity is in another city. Packing your life has a price.",impact:"-$2,500",impactVal:-2500,passive:0},
+];
+
+const EMOTIONS = [
+  {label:"Fear",       icon:"😨",color:"red"},
+  {label:"Frustration",icon:"😤",color:"amber"},
+  {label:"Calm",       icon:"😌",color:"green"},
+  {label:"Excitement", icon:"😃",color:"purple"},
+];
+const BELIEFS = [
+  {text:"This always happens to me.",   type:"limiting"},
+  {text:"I'll figure it out somehow.",  type:"neutral"},
+  {text:"There's an opportunity here.", type:"empowering"},
+];
+const COLOR = {
+  red:   {bg:"var(--red-bg)",bd:"var(--red-bd)",tx:"var(--red-tx)",md:"var(--red-md)"},
+  amber: {bg:"var(--amb-bg)",bd:"var(--amb-bd)",tx:"var(--amb-tx)",md:"var(--amb-md)"},
+  green: {bg:"var(--green-bg)",bd:"var(--green-bd)",tx:"var(--green-tx)",md:"var(--green-md)"},
+  blue:  {bg:"var(--blu-bg)",bd:"var(--blu-bd)",tx:"var(--blu-tx)",md:"var(--blu-md)"},
+  purple:{bg:"var(--pur-bg)",bd:"var(--pur-bd)",tx:"var(--pur-tx)",md:"var(--pur-md)"},
+  teal:  {bg:"var(--tel-bg)",bd:"var(--tel-bd)",tx:"var(--tel-tx)",md:"var(--tel-md)"},
+};
+const BTYPES = {limiting:"red",neutral:"amber",empowering:"green"};
+const TOTAL = 7;
+
+let state = { phase:"intro", deck:[], round:0, step:"card", emotion:null, belief:null, mentor:"", streaming:false, cash:0, passive:0, log:[], timerVal:0, timerHandle:null };
+
+function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
+function el(id){return document.getElementById(id);}
+function cname(type){ return BTYPES[type]||"green"; }
+
+function circleInfo(passive){
+  if(passive>=500) return {label:"Prosperity",c:"green"};
+  if(passive>=200) return {label:"Transition",c:"amber"};
+  return {label:"Survival",c:"red"};
+}
+
+/* ── Timer ── */
+function startTimer(from, onTick, onDone){
+  clearInterval(state.timerHandle);
+  state.timerVal = from;
+  onTick(from);
+  state.timerHandle = setInterval(()=>{
+    state.timerVal--;
+    onTick(state.timerVal);
+    if(state.timerVal<=0){ clearInterval(state.timerHandle); onDone(); }
+  },1000);
+}
+function stopTimer(){ clearInterval(state.timerHandle); }
+
+function renderRing(id, val, total){
+  const el2 = el(id); if(!el2) return;
+  const r=14,c=2*Math.PI*r;
+  const color = val<=3?"#E24B4A":val<=5?"#EF9F27":"#1D9E75";
+  el2.innerHTML = `<svg width="36" height="36" style="transform:rotate(-90deg)">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="var(--bd)" stroke-width="2.5"/>
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="${color}" stroke-width="2.5"
+      stroke-dasharray="${c}" stroke-dashoffset="${c*(1-val/total)}" stroke-linecap="round"
+      style="transition:stroke-dashoffset .9s linear,stroke .3s"/>
+  </svg><div class="timer-val" style="color:${color}">${val}</div>`;
+}
+
+/* ── Render ── */
+function render(){
+  const root = el('root');
+  const {phase,round,step,emotion,belief,mentor,streaming,cash,passive,log} = state;
+  const ci = circleInfo(passive);
+  const C2 = COLOR;
+
+  if(phase==="intro"){
+    root.innerHTML = `<div class="screen active fade" id="s-intro" style="justify-content:center;padding:30px 0;">
+      <div style="padding:0 20px">
+        <div style="background:var(--green-bg);border-radius:20px;padding:28px 22px 24px;border:1.5px solid var(--green-bd);margin-bottom:20px">
+          <p style="font-size:26px;font-weight:700;color:var(--green-tx);margin-bottom:6px">Path of Prosperity</p>
+          <p style="font-size:14px;color:var(--green-md);line-height:1.5">7 real-life events. Real choices. No comfort. See where you land.</p>
+        </div>
+        ${["7 cards — Events happen. You respond fast.","Pick emotion + belief — No typing. Just taps.","AI mentor — Reads your pattern. Calls it out.","Final audit — Your behavioral report at the end."].map(t=>{
+          const [title,desc]=t.split(" — ");
+          return `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:5px;flex-shrink:0"></div>
+            <div><p style="font-size:14px;font-weight:600;margin-bottom:1px">${title}</p><p style="font-size:13px;color:var(--tx2)">${desc}</p></div>
+          </div>`;
+        }).join("")}
+        <button class="btn-primary mt16" style="background:var(--green)" onclick="startGame()">Start playing →</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  if(phase==="game"){
+    const card = state.deck[round];
+    const cc = C2[card.color];
+    const progress = Array.from({length:TOTAL},(_,i)=>`<div class="progress-seg${i<round?" done":i===round?" active":""}"></div>`).join("");
+    const emc = emotion ? C2[emotion.color] : null;
+    const btype = belief ? cname(belief.type) : "green";
+    const bc = belief ? C2[btype] : null;
+
+    let content = "";
+
+    if(step==="card"){
+      content = `
+        <div class="event-card fade" style="background:${cc.bg};border-color:${cc.bd}">
+          <div class="row mb14" style="align-items:flex-start">
+            <span class="cat-badge" style="color:${cc.tx};border-color:${cc.bd}">${card.cat}</span>
+            <div class="timer-wrap" id="ring"></div>
+          </div>
+          <p class="card-title" style="color:${cc.tx}">${card.title}</p>
+          <p class="card-desc"  style="color:${cc.md}">${card.desc}</p>
+          <span class="impact-chip" style="color:${cc.tx}">${card.impact}</span>
+        </div>
+        <div class="ph16"><button class="btn-primary" style="background:${cc.md}" onclick="goEmotion()">How does this make you feel? →</button></div>`;
+    }
+
+    if(step==="emotion"){
+      content = `
+        <div class="body fade">
+          <div class="row mb14"><p class="h2">How are you feeling?</p><div class="timer-wrap" id="ring"></div></div>
+          <p style="font-size:13px;color:var(--tx3);margin-bottom:16px">First instinct. Tap fast.</p>
+        </div>
+        <div class="emo-grid fade">
+          ${EMOTIONS.map(e=>{const ec=C2[e.color];return`<button class="emo-btn" style="border-color:${ec.bd};background:${ec.bg}" onclick="pickEmotion('${e.label}','${e.icon}','${e.color}')">
+            <span class="emo-icon">${e.icon}</span>
+            <span class="emo-label" style="color:${ec.tx}">${e.label}</span>
+          </button>`;}).join("")}
+        </div>`;
+    }
+
+    if(step==="belief"){
+      content = `
+        <div class="body fade">
+          <div class="row mb14"><p class="h2">What do you believe?</p><div class="timer-wrap" id="ring"></div></div>
+          ${emc?`<div style="display:inline-flex;align-items:center;gap:5px;margin-bottom:14px;background:${emc.bg};border:0.5px solid ${emc.bd};border-radius:20px;padding:3px 10px"><span style="font-size:14px">${emotion.icon}</span><span style="font-size:12px;color:${emc.tx}">${emotion.label}</span></div>`:""}
+        </div>
+        <div class="belief-list fade">
+          ${BELIEFS.map(b=>{const bt=cname(b.type),bbc=C2[bt];return`<button class="belief-btn" style="border-color:${bbc.bd};border-left-color:${bbc.md};background:${bbc.bg}" onclick="pickBelief('${b.text.replace(/'/g,"\\'")}','${b.type}')">
+            <p class="belief-text" style="color:${bbc.tx}">${b.text}</p>
+            <p class="belief-type" style="color:${bbc.md}">${b.type}</p>
+          </button>`;}).join("")}
+        </div>`;
+    }
+
+    if(step==="mentor"){
+      content = `
+        <div class="body fade mb14">
+          <div class="mentor-meta">
+            <div class="mentor-avatar">M</div>
+            <div>
+              <p style="font-size:14px;font-weight:600">Mentor</p>
+              <p style="font-size:12px;color:var(--tx3)">${streaming?"reading your pattern…":"response ready"}</p>
+            </div>
+            ${emc?`<div style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;background:${emc.bg};border:0.5px solid ${emc.bd};border-radius:20px;padding:3px 9px"><span style="font-size:12px">${emotion.icon}</span><span style="font-size:11px;color:${emc.tx}">${emotion.label}</span></div>`:""}
+          </div>
+          <div class="mentor-box">
+            <p class="mentor-text" id="mentor-p">${mentor||"<span style='color:var(--tx3)'>…</span>"}${streaming?"<span class='cursor'>▍</span>":""}</p>
+          </div>
+        </div>
+        ${!streaming?`<div class="ph16"><button class="btn-primary" style="background:var(--green)" onclick="goOutcome()">Got it →</button></div>`:""}`;
+    }
+
+    if(step==="outcome"){
+      const impColor = card.impactVal>=0?"var(--green-tx)":"var(--red-tx)";
+      const bTypeLabel = belief?.type||"—";
+      const btc = C2[cname(belief?.type||"neutral")];
+      const recentLog = log.slice(-3);
+      content = `
+        <div class="body fade">
+          <p class="h2 mb14">Round ${round+1} complete</p>
+        </div>
+        <div class="stat-grid fade">
+          <div class="stat-card"><p class="stat-label">Impact</p><p class="stat-val" style="color:${impColor}">${card.impact}</p></div>
+          <div class="stat-card"><p class="stat-label">Belief</p><p class="stat-val" style="font-size:14px;color:${btc.tx};text-transform:capitalize">${bTypeLabel}</p></div>
+          <div class="stat-card"><p class="stat-label">Cash total</p><p class="stat-val" style="font-size:15px;color:${cash>=0?"var(--green-tx)":"var(--red-tx)"}">${cash>=0?"+":""}$${Math.abs(cash).toLocaleString()}</p></div>
+          <div class="stat-card"><p class="stat-label">Passive/mo</p><p class="stat-val" style="font-size:15px;color:var(--blu-tx)">$${passive}</p></div>
+        </div>
+        ${recentLog.length>1?`<div class="log-box fade">
+          <p style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);margin-bottom:8px">Session so far</p>
+          ${recentLog.map(l=>{const lc=C2[cname(l.beliefType)];return`<div class="log-row"><span class="log-rnd">R${l.round}</span><span class="log-name">${l.card}</span><span class="log-chip" style="background:${lc.bg};color:${lc.tx}">${l.beliefType}</span></div>`;}).join("")}
+        </div>`:""}
+        <div class="ph16 fade">
+          <button class="btn-primary" style="background:${round+1>=TOTAL?"var(--pur-md)":"var(--green)"}" onclick="nextRound()">${round+1>=TOTAL?"See your results →":"Next card →"}</button>
+        </div>`;
+    }
+
+    root.innerHTML = `<div class="screen active" id="s-game">
+      <div class="status">
+        <span class="status-title">Round ${round+1} of ${TOTAL}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="pill" style="background:${C2[ci.c].bg};color:${C2[ci.c].tx};border-color:${C2[ci.c].bd}">${ci.label}</span>
+          ${passive>0?`<span style="font-size:11px;color:var(--green-tx)">+$${passive}/mo</span>`:""}
+        </div>
+      </div>
+      <div class="progress">${progress}</div>
+      <div style="flex:1;padding-top:14px">${content}</div>
+    </div>`;
+
+    if(["card","emotion","belief"].includes(step)){
+      const dur = step==="card"?9:step==="emotion"?8:9;
+      startTimer(dur, v=>renderRing("ring",v,dur), ()=>{
+        if(step==="card")    goEmotion();
+        else if(step==="emotion") pickEmotion(EMOTIONS[0].label,EMOTIONS[0].icon,EMOTIONS[0].color);
+        else if(step==="belief")  pickBelief(BELIEFS[0].text,BELIEFS[0].type);
+      });
+    }
+  }
+
+  if(phase==="end"){
+    const emotCounts={};
+    log.forEach(l=>{emotCounts[l.emotion]=(emotCounts[l.emotion]||0)+1;});
+    const limiting = log.filter(l=>l.beliefType==="limiting").length;
+    const topEmot  = Object.entries(emotCounts).sort((a,b)=>b[1]-a[1]);
+    const maxEmot  = topEmot[0]?.[1]||1;
+    const strs=[];
+    if(log.filter(l=>l.emotion==="Calm").length>=2)         strs.push("Calm under pressure");
+    if(log.filter(l=>l.beliefType==="empowering").length>=2) strs.push("Growth mindset");
+    strs.push("Persistence");
+
+    root.innerHTML=`<div class="screen active fade" id="s-end">
+      <div class="status"><span class="status-title">Session complete</span></div>
+      <div style="padding:14px 0">
+        <div style="margin:0 16px 14px;background:${COLOR[ci.c].bg};border:1.5px solid ${COLOR[ci.c].bd};border-radius:${14}px;padding:18px">
+          <p style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:${COLOR[ci.c].md};margin-bottom:4px">You reached</p>
+          <p style="font-size:24px;font-weight:700;color:${COLOR[ci.c].tx};margin-bottom:2px">${ci.label} Circle</p>
+          <p style="font-size:13px;color:${COLOR[ci.c].md}">${TOTAL} rounds · ${log.filter(l=>l.beliefType==="empowering").length} empowering · ${limiting} limiting</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><p class="stat-label">Cash</p><p class="stat-val" style="color:${cash>=0?"var(--green-tx)":"var(--red-tx)"}">${cash>=0?"+":""}$${Math.abs(cash).toLocaleString()}</p></div>
+          <div class="stat-card"><p class="stat-label">Passive/mo</p><p class="stat-val" style="color:var(--blu-tx)">$${passive}</p></div>
+        </div>
+        <div style="padding:0 16px;margin-bottom:14px">
+          <p style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--tx3);margin-bottom:8px">Emotion breakdown</p>
+          ${topEmot.map(([e,v])=>{
+            const ec=COLOR[EMOTIONS.find(x=>x.label===e)?.color||"green"];
+            return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+              <span style="font-size:12px;color:var(--tx2);width:85px;flex-shrink:0">${e}</span>
+              <div style="flex:1;height:7px;background:var(--bg2);border-radius:3px;overflow:hidden">
+                <div style="width:${Math.round(v/maxEmot*100)}%;height:100%;background:${ec.md};border-radius:3px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:600;min-width:18px;text-align:right">${v}×</span>
+            </div>`;
+          }).join("")}
+        </div>
+        <div style="padding:0 16px;display:flex;gap:8px;">
+          <button class="btn-primary" style="background:var(--pur-md)" onclick="genReport()">Prosperity Audit ↗</button>
+          <button class="btn-ghost" onclick="startGame()" style="width:auto;padding:13px 16px;white-space:nowrap">Replay</button>
+        </div>
+        <div id="report-area" style="margin-top:14px"></div>
+      </div>
+    </div>`;
+  }
+}
+
+/* ── Actions ── */
+function startGame(){
+  state = {...state, phase:"game", deck:shuffle(CARDS).slice(0,TOTAL), round:0, step:"card",
+    emotion:null, belief:null, mentor:"", streaming:false, cash:0, passive:0, log:[] };
+  render();
+}
+
+function goEmotion(){ stopTimer(); state.step="emotion"; render(); }
+function goOutcome(){ state.step="outcome"; render(); }
+
+function pickEmotion(label,icon,color){
+  stopTimer(); state.emotion={label,icon,color}; state.step="belief"; render();
+}
+
+function pickBelief(text,type){
+  stopTimer(); state.belief={text,type};
+  fetchMentor(text,type);
+}
+
+async function fetchMentor(text,type){
+  state.step="mentor"; state.mentor=""; state.streaming=true; render();
+  const card=state.deck[state.round], e=state.emotion||EMOTIONS[0];
+  const past=state.log.slice(-3).map(l=>l.emotion).join(", ");
+  const patCount=state.log.filter(l=>l.emotion===e.label).length;
+  const pattern=patCount>=2?`PATTERN: Player chose ${e.label} ${patCount+1} times. Name it directly.`:"";
+  const prompt=`You are the AI mentor in Path of Prosperity. EXACTLY 2 sentences. Sentence 1: sharp observation on this emotion+belief combo. Sentence 2: one specific slightly uncomfortable question. No fluff. No spiritual language. Direct.\n\n${pattern}\nRound:${state.round+1}/${TOTAL}\nCard:${card.title} (${card.impact})\nEmotion:${e.label}\nBelief:"${text}" (${type})\nRecent emotions:${past||"first round"}\n\nTwo sentences only.`;
+  let full="";
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,stream:true,messages:[{role:"user",content:prompt}]})});
+    const reader=res.body.getReader(),dec=new TextDecoder();
+    while(true){
+      const{done,value}=await reader.read(); if(done)break;
+      for(const line of dec.decode(value).split("\n").filter(l=>l.startsWith("data:"))){
+        try{const j=JSON.parse(line.slice(5));if(j.delta?.text){full+=j.delta.text;state.mentor=full;const p=el("mentor-p");if(p)p.innerHTML=full+"<span class='cursor'>▍</span>";}}catch{}
+      }
+    }
+  }catch{full="Connection issue — but you still made a choice. That counts.";state.mentor=full;}
+  state.streaming=false;
+  state.cash+=state.deck[state.round].impactVal||0;
+  state.passive+=state.deck[state.round].passive||0;
+  state.log.push({round:state.round+1,card:state.deck[state.round].title,emotion:state.emotion?.label,beliefText:text,beliefType:type,impact:state.deck[state.round].impact});
+  const p=el("mentor-p"); if(p){p.innerHTML=full;}
+  const gotit=document.createElement("div");
+  gotit.className="ph16 mt16";
+  gotit.innerHTML=`<button class="btn-primary" style="background:var(--green)" onclick="goOutcome()">Got it →</button>`;
+  const mentor_box = el("mentor-p")?.closest(".body");
+  if(mentor_box)mentor_box.after(gotit);
+}
+
+function nextRound(){
+  if(state.round+1>=TOTAL){state.phase="end";render();return;}
+  state.round++; state.step="card"; state.emotion=null; state.belief=null; state.mentor=""; render();
+}
+
+async function genReport(){
+  const ra=el("report-area"); if(!ra)return;
+  ra.innerHTML=`<div style="padding:0 16px"><p style="font-size:13px;color:var(--tx3)">Generating your audit…</p></div>`;
+  const {log,cash,passive,phase} = state;
+  const ci=circleInfo(passive);
+  const ec={};log.forEach(l=>{ec[l.emotion]=(ec[l.emotion]||0)+1;});
+  const beliefs=[...new Set(log.map(l=>l.beliefText))].join(" | ");
+  const limiting=log.filter(l=>l.beliefType==="limiting").length;
+  const strs=["Persistence"];
+  if(log.filter(l=>l.emotion==="Calm").length>=2) strs.push("Calm under pressure");
+  if(log.filter(l=>l.beliefType==="empowering").length>=2) strs.push("Growth mindset");
+  const prompt=`You are the AI engine for Path of Prosperity. Tight Prosperity Audit. Direct, personal, slightly confronting. Reference the actual data.\n\nRounds:${TOTAL}\nCash:${cash>=0?"+":""}$${Math.abs(cash).toLocaleString()}\nPassive:$${passive}/mo\nCircle:${ci.label}\nEmotions:${Object.entries(ec).map(([k,v])=>`${k}:${v}`).join(", ")}\nLimiting beliefs:${limiting}/${TOTAL}\nBeliefs chosen:${beliefs}\nStrengths:${strs.join(", ")}\n\nOutput with these exact headers:\nPATTERNS:\nBELIEFS:\nSTRENGTHS:\nINSIGHT:\nSTEPS:\n\nEach section 2-3 tight sentences. STEPS: 3 numbered steps, 2 sentences each. No bullet points.`;
+  let full="";
+  const sections={PATTERNS:"",BELIEFS:"",STRENGTHS:"",INSIGHT:"",STEPS:""};
+  const secDef=[["PATTERNS","red","Patterns"],["BELIEFS","amber","Limiting beliefs"],["STRENGTHS","green","Strengths"],["INSIGHT","amber","Behavioral insight ★"],["STEPS","purple","Next steps"]];
+
+  function buildReportHTML(text){
+    const parsed={};
+    for(const[key]of secDef){
+      const rx=new RegExp(`${key}:\\s*([\\s\\S]*?)(?=PATTERNS:|BELIEFS:|STRENGTHS:|INSIGHT:|STEPS:|$)`,"i");
+      parsed[key]=(text.match(rx)?.[1]||"").trim();
+    }
+    return `<div style="padding:0 16px">
+      ${secDef.map(([key,color,label])=>{
+        const cc=COLOR[color];
+        return parsed[key]?`<div class="report-section" style="border-color:${cc.bd}">
+          <div class="report-head" style="background:${cc.bg};border-color:${cc.bd}">
+            <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:${cc.md}">${label}</p>
+          </div>
+          <div class="report-body" style="color:${cc.tx};white-space:pre-line">${parsed[key]}</div>
+        </div>`:"";
+      }).join("")}
+    </div>`;
+  }
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,stream:true,messages:[{role:"user",content:prompt}]})});
+    const reader=res.body.getReader(),dec=new TextDecoder();
+    while(true){
+      const{done,value}=await reader.read(); if(done)break;
+      for(const line of dec.decode(value).split("\n").filter(l=>l.startsWith("data:"))){
+        try{const j=JSON.parse(line.slice(5));if(j.delta?.text){full+=j.delta.text;ra.innerHTML=buildReportHTML(full);}}catch{}
+      }
+    }
+  }catch{ra.innerHTML=`<div style="padding:0 16px"><p style="font-size:13px;color:var(--tx3)">Report unavailable — check connection.</p></div>`;}
+}
+
+/* ── Service Worker reg ── */
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+render();
+</script>
+</body>
+</html>
