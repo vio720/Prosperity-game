@@ -267,20 +267,25 @@ function render(){
         <div class="event-card fade" style="background:${cc.bg};border-color:${cc.bd}">
           <div class="row mb14" style="align-items:flex-start">
             <span class="cat-badge" style="color:${cc.tx};border-color:${cc.bd}">${card.cat}</span>
-            <div class="timer-wrap" id="ring"></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="timer-wrap" id="ring"></div>
+            </div>
           </div>
           <p class="card-title" style="color:${cc.tx}">${card.title}</p>
           <p class="card-desc"  style="color:${cc.md}">${card.desc}</p>
           <span class="impact-chip" style="color:${cc.tx}">${card.impact}</span>
         </div>
-        <div class="ph16"><button class="btn-primary" style="background:${cc.md}" onclick="goEmotion()">How does this make you feel? →</button></div>`;
+        <div class="ph16" style="display:flex;gap:8px">
+          <button class="btn-primary" style="background:${cc.md};flex:1" onclick="goEmotion()">How does this make you feel? →</button>
+          <button onclick="goEmotion()" style="padding:13px 14px;border-radius:12px;border:1px solid ${cc.bd};background:${cc.bg};color:${cc.tx};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Skip ⏩</button>
+        </div>`;
     }
 
     if(step==="emotion"){
       content = `
         <div class="body fade">
-          <div class="row mb14"><p class="h2">How are you feeling?</p><div class="timer-wrap" id="ring"></div></div>
-          <p style="font-size:13px;color:var(--tx3);margin-bottom:16px">First instinct. Tap fast.</p>
+          <div class="row mb14"><p class="h2">How are you feeling?</p><div style="display:flex;align-items:center;gap:8px"><div class="timer-wrap" id="ring"></div></div></div>
+          <p style="font-size:13px;color:var(--tx3);margin-bottom:16px">First instinct. Tap fast — or wait for auto-advance.</p>
         </div>
         <div class="emo-grid fade">
           ${EMOTIONS.map(e=>{const ec=C2[e.color];return`<button class="emo-btn" style="border-color:${ec.bd};background:${ec.bg}" onclick="pickEmotion('${e.label}','${e.icon}','${e.color}')">
@@ -359,7 +364,7 @@ function render(){
     </div>`;
 
     if(["card","emotion","belief"].includes(step)){
-      const dur = step==="card"?9:step==="emotion"?8:9;
+      const dur = step==="card"?27:step==="emotion"?24:27;
       startTimer(dur, v=>renderRing("ring",v,dur), ()=>{
         if(step==="card")    goEmotion();
         else if(step==="emotion") pickEmotion(EMOTIONS[0].label,EMOTIONS[0].icon,EMOTIONS[0].color);
