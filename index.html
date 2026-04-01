@@ -221,6 +221,7 @@ function render(){
   const C2 = COLOR;
 
   if(phase==="intro"){
+    const key = getKey();
     root.innerHTML = `<div class="screen active fade" id="s-intro" style="justify-content:center;padding:30px 0;">
       <div style="padding:0 20px">
         <div style="background:var(--green-bg);border-radius:20px;padding:28px 22px 24px;border:1.5px solid var(--green-bd);margin-bottom:20px">
@@ -234,7 +235,18 @@ function render(){
             <div><p style="font-size:14px;font-weight:600;margin-bottom:1px">${title}</p><p style="font-size:13px;color:var(--tx2)">${desc}</p></div>
           </div>`;
         }).join("")}
-        <button class="btn-primary mt16" style="background:var(--green)" onclick="startGame()">Start playing →</button>
+
+        <div style="background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:14px;border:0.5px solid var(--bd)">
+          <p style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--tx)">Anthropic API Key</p>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5">Required for the AI mentor and Prosperity Audit. Get yours free at <a href="https://console.anthropic.com" style="color:var(--green)">console.anthropic.com</a> → API Keys.</p>
+          <input id="api-key-input" type="password" placeholder="sk-ant-..." value="${key}"
+            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd2);background:var(--bg);color:var(--tx);font-size:14px;font-family:monospace;outline:none;box-sizing:border-box;margin-bottom:8px"/>
+          <button onclick="saveKeyAndPlay()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer">
+            ${key ? "Play →" : "Save key & play →"}
+          </button>
+          ${key ? `<p style="font-size:11px;color:var(--tx3);text-align:center;margin-top:8px">Key saved on this device. Tap play to start.</p>` : ""}
+        </div>
+        <p style="font-size:11px;color:var(--tx3);text-align:center;line-height:1.5">Your key is stored only on your device.<br>Never shared or sent anywhere except Anthropic.</p>
       </div>
     </div>`;
     return;
@@ -403,6 +415,21 @@ function render(){
 }
 
 /* ── Actions ── */
+function saveKeyAndPlay(){
+  const input = document.getElementById('api-key-input');
+  const val = input ? input.value.trim() : "";
+  if(!val || !val.startsWith("sk-")){
+    if(input) input.style.borderColor="#E24B4A";
+    const err = document.createElement('p');
+    err.style.cssText="font-size:12px;color:var(--red-md);margin-top:4px;text-align:center";
+    err.textContent="Please enter a valid Anthropic API key (starts with sk-ant-)";
+    input.after(err); setTimeout(()=>err.remove(),3000);
+    return;
+  }
+  saveKey(val);
+  startGame();
+}
+
 function startGame(){
   state = {...state, phase:"game", deck:shuffle(CARDS).slice(0,TOTAL), round:0, step:"card",
     emotion:null, belief:null, mentor:"", streaming:false, cash:0, passive:0, log:[] };
@@ -430,7 +457,7 @@ async function fetchMentor(text,type){
   const prompt=`You are the AI mentor in Path of Prosperity. EXACTLY 2 sentences. Sentence 1: sharp observation on this emotion+belief combo. Sentence 2: one specific slightly uncomfortable question. No fluff. No spiritual language. Direct.\n\n${pattern}\nRound:${state.round+1}/${TOTAL}\nCard:${card.title} (${card.impact})\nEmotion:${e.label}\nBelief:"${text}" (${type})\nRecent emotions:${past||"first round"}\n\nTwo sentences only.`;
   let full="";
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+          const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:apiHeaders(),
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,stream:true,messages:[{role:"user",content:prompt}]})});
     const reader=res.body.getReader(),dec=new TextDecoder();
     while(true){
@@ -493,7 +520,7 @@ async function genReport(){
   }
 
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:apiHeaders(),
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,stream:true,messages:[{role:"user",content:prompt}]})});
     const reader=res.body.getReader(),dec=new TextDecoder();
     while(true){
@@ -503,6 +530,20 @@ async function genReport(){
       }
     }
   }catch{ra.innerHTML=`<div style="padding:0 16px"><p style="font-size:13px;color:var(--tx3)">Report unavailable — check connection.</p></div>`;}
+}
+
+/* ── API Key ── */
+const API_KEY_STORE = 'pop_api_key';
+function getKey(){ return localStorage.getItem(API_KEY_STORE)||""; }
+function saveKey(k){ localStorage.setItem(API_KEY_STORE, k.trim()); }
+
+function apiHeaders(){
+  return {
+    "Content-Type": "application/json",
+    "x-api-key": getKey(),
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true"
+  };
 }
 
 /* ── Service Worker reg ── */
